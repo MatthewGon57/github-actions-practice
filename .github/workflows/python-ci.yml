@@ -1,0 +1,75 @@
+name: Python CI Pipeline
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        python-version: ["3.12", "3.13"]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -r requirements-dev.txt
+
+      - name: Run Ruff lint
+        run: ruff check .
+
+      - name: Run tests with pytest and coverage
+        run: |
+          pytest --maxfail=1 --disable-warnings -q \
+            --cov=src --cov-report=xml:coverage.xml \
+            --junitxml=pytest-report.xml
+
+      - name: Upload coverage and test reports
+        uses: actions/upload-artifact@v3
+        with:
+          name: test-reports
+          path: |
+            coverage.xml
+            pytest-report.xml
+
+      - name: Build wheel
+        run: |
+          python -m build
+        env:
+          PIP_DISABLE_PIP_VERSION_CHECK: 1
+
+      - name: Upload wheel to S3
+        run: |
+          aws s3 cp dist/*.whl s3://mg-actions-artifacts-2k25/
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-west-2
+
+      - name: Upload wheel to CodeArtifact
+        run: |
+          aws codeartifact login \
+            --tool pip \
+            --repository mg-repo \
+            --domain mg-domain \
+            --domain-owner 959305806236 \
+            --region us-west-2
+          pip install dist/*.whl --extra-index-url https://mg-domain-959305806236.d.codeartifact.us-west-2.amazonaws.com/pypi/mg-repo/simple/
+
