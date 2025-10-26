@@ -72,11 +72,11 @@ jobs:
           echo "token=$TOKEN" >> $GITHUB_OUTPUT
 
       - name: Upload wheel to CodeArtifact via Twine
-  env:
-    TWINE_USERNAME: aws
-    TWINE_PASSWORD: ${{ steps.ca.outputs.token }}
-  run: |
-    REPO_URL="https://mg-domain-959305806236.d.codeartifact.us-west-2.amazonaws.com/pypi/mg-repo/"
-    twine upload --repository-url "$REPO_URL" dist/*.whl
+        env:
+          TWINE_USERNAME: aws
+          TWINE_PASSWORD: ${{ steps.ca.outputs.token }}
+        run: |
+          REPO_URL="https://mg-domain-959305806236.d.codeartifact.us-west-2.amazonaws.com/pypi/mg-repo/"
+          twine upload --repository-url "$REPO_URL" dist/*.whl
 
 
