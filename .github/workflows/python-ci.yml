@@ -30,6 +30,9 @@ jobs:
           pip install -r requirements-dev.txt || true
           pip install pytest pytest-cov build twine boto3 ruff
 
+      - name: Install package
+        run: pip install -e .
+
       - name: Ruff lint
         run: ruff check .
 
