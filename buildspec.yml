@@ -1,0 +1,31 @@
+version: 0.2
+
+phases:
+  install:
+    runtime-versions:
+      python: 3.12
+    commands:
+      - echo "Installing dependencies"
+      - pip install -r requirements.txt
+      - pip install -r requirements-dev.txt
+      - pip install pytest pytest-cov ruff build twine
+  pre_build:
+    commands:
+      - echo "Running lint"
+      - ruff check .
+  build:
+    commands:
+      - echo "Running tests"
+      - pytest --junitxml=pytest-report.xml --cov=src --cov-report=xml:coverage.xml
+      - echo "Building package"
+      - python -m build
+  post_build:
+    commands:
+      - echo "Build complete. Uploading artifacts."
+
+artifacts:
+  files:
+    - pytest-report.xml
+    - coverage.xml
+    - dist/*
+
