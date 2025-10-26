@@ -59,10 +59,12 @@ jobs:
           aws-region: us-west-2
 
       - name: Upload wheel(s) to S3
+        if: matrix.python-version == '3.12'
         run: |
           aws s3 cp dist/ s3://mg-actions-artifacts-2k25/ --recursive --exclude "*" --include "*.whl"
 
       - name: Get CodeArtifact auth token
+        if: matrix.python-version == '3.12'
         id: ca
         run: |
           TOKEN=$(aws codeartifact get-authorization-token \
@@ -72,11 +74,11 @@ jobs:
           echo "token=$TOKEN" >> $GITHUB_OUTPUT
 
       - name: Upload wheel to CodeArtifact via Twine
+        if: matrix.python-version == '3.12'
         env:
           TWINE_USERNAME: aws
           TWINE_PASSWORD: ${{ steps.ca.outputs.token }}
         run: |
           REPO_URL="https://mg-domain-959305806236.d.codeartifact.us-west-2.amazonaws.com/pypi/mg-repo/"
           twine upload --repository-url "$REPO_URL" dist/*.whl
-
 
